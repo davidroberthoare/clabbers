@@ -1,0 +1,163 @@
+<!-- This is a static file -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    
+    <title>Clabbers</title>
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+    <link rel="manifest" href="/icons/site.webmanifest">
+    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg" color="#5bbad5">
+    <link rel="shortcut icon" href="/icons/favicon.ico">
+    <meta name="apple-mobile-web-app-title" content="Clabbers">
+    <meta name="application-name" content="Clabbers">
+    <meta name="msapplication-TileColor" content="#ffc40d">
+    <meta name="msapplication-config" content="/icons/browserconfig.xml">
+    <meta name="theme-color" content="#ffffff">
+    
+    
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css"
+    />
+    <link rel="stylesheet" href="/style.css" />
+    
+    <script src="/cookies.js"></script>
+    
+    
+  </head>
+  <body>
+    
+    <div id='main'>
+      
+      <div id='header' >
+        <div id='player_row' class='level is-mobile'>
+         
+        </div>
+        
+        <div id='link_row' class='level is-mobile'>
+          <div class='level-item'>
+            <a href='/'>Home</a>
+          </div>
+          <div class='level-item'>
+            <a href='javascript:resetGame()'>Reset</a>
+          </div>
+          <div class='level-item'>
+            <a href='javascript:newMatch()'>New Match</a>
+          </div>
+          <div class='level-item'>
+            <a href='javascript:doShare()'>Invite</a>
+          </div>
+          <div class='level-item'>
+            <div class='onesignal-customlink-container'></div>
+          </div>
+          <!--<div class='level-item'>-->
+          <!--  <a href='javascript:doTest()'>Test</a>-->
+          <!--</div>-->
+        </div>
+        
+      </div>
+      
+      <div id='game'>
+        <div id='grid'></div>
+      </div>
+      
+      
+      <div id="controls">
+        <div id="btn_recall"><i class="fa fa-refresh" aria-hidden="true"></i></div>
+        <div id="rack"></div>
+        <div id="buttons" class='columns is-mobile'>
+          <button class="button is-info column is-2" id='btn_bag'><i class="fa fa-shopping-bag" aria-hidden="true"></i> (<span id='bag_letter_count'>100</span>)</button>
+          <button class="button is-warning column is-2" id='btn_shuffle'><i class="fa fa-random" aria-hidden="true"></i></button>
+          <button class="button is-success column" id='btn_play_word'><i class="fa fa-play" aria-hidden="true"></i></button>
+          <div class="column" style='position: relative;'>
+            <div id='spell_results' class='box'>(no results)</div>
+            <input id='dict_lookup' class='input' placeholder="Dictionary">
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    
+    <div id='history_window' class='stashed'>
+      <div id='history_toggle' class='animate__animated'><i class="fa fa-history" aria-hidden="true"></i></div>
+      <div id='history_log'></div>
+    </div>
+    
+    <div id='chat_window' class='stashed'>
+      <div id='chat_toggle' class='animate__animated'><i class="fa fa-comments-o" aria-hidden="true"></i></div>
+      <div id='chat_messages'></div>
+      <div id='chat_entry_container'>
+        <input id='chat_entry' class='input is-fullwidth' placeholder="say something..."/>
+      </div>
+    </div>
+    
+    
+    <div id='bag' class='box'>
+      <div id='bag_letters' class=''></div>
+      <button id='bag_btn_close' class='button'>Close</button>
+    </div>
+    
+    <div id='invite_box' class="modal">
+      <div class="modal-background"></div>
+      <div class="modal-content">
+        <div class='box'>
+          <div class='title'>Invite a friend</div>
+          <div class='subtitle'>Share this url with a friend to invite them to this game.</div>
+          <div><a href='' id='invite_link'></a></div>
+        </div>
+      </div>
+      <button class="modal-close is-large" aria-label="close"></button>
+    </div>
+    
+    
+    <div id="spinner">
+      <img src='/img/spinner.gif'>
+    </div>
+    
+    
+  </body>
+
+  <script src="/page_lifecycle.js"></script>
+  
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <link
+    rel="stylesheet"
+    href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css"
+  />
+  <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+  <!--<script src="/jq_sortable_anim.js"></script>-->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-touch-events/1.0.5/jquery.mobile-events.js"></script>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+  />
+  
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">  
+  
+  <script src="/colyseus.js"></script>
+  <script src="/script.js" defer></script>
+  
+  <!--ONE SIGNAL-->
+    <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
+    <script>
+      window.OneSignal = window.OneSignal || [];
+      OneSignal.push(function() {
+        OneSignal.init({
+          appId: "b480a1b1-1d29-4ec8-89fe-a83e881ced94",
+        });
+      });
+      OneSignal.push(function() {
+      OneSignal.setExternalUserId(my_userid);
+    });
+    </script>
+    
+    
+  
+</html>

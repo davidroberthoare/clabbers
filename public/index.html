@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Clabbers HOME</title>
+        <meta name="description" content="play a word-game with friends">
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css">
+        <link rel="stylesheet" href="/style.css">
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+        
+        <script src="/cookies.js" async defer></script>
+        <script src="/colyseus.js"></script>
+        
+        <meta name="google-signin-scope" content="openid">
+        <meta name="google-signin-client_id" content="869967783098-q8fds3c3jvnbghdtuk9bogtqc6n2sqid.apps.googleusercontent.com">
+        <script src="https://apis.google.com/js/platform.js" async defer></script>
+        <script>
+            
+            function onSignIn(googleUser) {
+                var profile = googleUser.getBasicProfile();
+                console.log("ID: " + profile.getId());
+                console.log('Full Name: ' + profile.getName());
+                console.log('Given Name: ' + profile.getGivenName());
+                // console.log('Family Name: ' + profile.getFamilyName());
+                // console.log("Image URL: " + profile.getImageUrl());
+                // console.log("Email: " + profile.getEmail());
+    
+                // The ID token you need to pass to your backend:
+                var id_token = googleUser.getAuthResponse().id_token;
+                // console.log("ID Token: " + id_token);
+    
+                var userdata = {
+                    id: profile.getId(),
+                    name: profile.getGivenName()
+                };
+                var cookiestring = JSON.stringify(userdata);
+                Cookies.set('user', cookiestring, { expires: 60000 }); // Expires in 10 minutes
+    
+                $("#chooser").show();
+                $(".intro_text").hide();
+                
+                
+                // check if there's a gameid-redirect, in which case just go there directly...
+                var url = new URL(window.location.href);
+                if(url.searchParams.get("re")){
+                    gameid = url.searchParams.get("re");
+                    window.location.href='/play/?game='+gameid;
+                }else{
+                    joinLobby(userdata);
+                }
+            }
+            
+            
+            function gothere(){
+                if($("#game_code").val()!=''){
+                   window.location.href = "/play/?game=" + $("#game_code").val(); 
+                }else{
+                    alert("please enter a room code");
+                }
+            }
+            
+            
+            
+            
+                        
+            // ********** COLYSEUS CONNECTION
+            const endpoint = `${window.location.protocol.replace("http", "ws")}//${
+              window.location.hostname
+            }`;
+            var client = new Colyseus.Client(endpoint);
+            
+            var room;
+            
+            function randomGameID() {
+              return 'gxxxxxxxxxxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+              });
+            }
+
+            
+            function joinLobby(userdata){
+                console.log("trying to join lobby")
+                // Connect to the chatroom
+                client
+                  .joinOrCreate("lobby", { userid: userdata.id})
+                  .then(myroom => {
+                    room = myroom;
+                    console.log(room.sessionId, "joined", room.name);
+                
+                  
+                    room.onMessage("history", data => {
+                      console.log("history", data);
+                      updateHistory(data);
+                    });
+                  
+                    
+                        
+                    })
+                  .catch(e => {
+                    console.log("JOIN ERROR", e);
+                  });
+                
+            }
+            
+            
+            function updateHistory(data){
+                $("#history").empty();
+                $.each(data, function(key, game){
+                  console.log("adding game", key, game);  
+                  
+                    var playerString = "";
+                    $.each(game.players, function(id, p_data){
+                        console.log("adding player", id, p_data);
+                        if(id > 0) playerString += ", ";
+                        playerString += p_data.name;
+                        playerString += " (" + p_data.points +")" ;
+                    });
+                    
+                    var wordString="";
+                    $.each(game.last_played, function(id, letter){
+                        console.log("adding letter", id, letter);
+                        wordString += letter.char;
+                    });
+                    
+                    var entry = "<button class='past_game' data-id='"+key+"' data-active='"+game.last_active_at+"'>";
+                    entry += "<b>" + playerString +"</b>";
+                    entry += "<br><span class='subtitle is-7'>";
+                    entry += "Last Played: ";
+                    if(wordString != ''){
+                        entry += "<b>" + wordString + "</b>, ";
+                    }
+                    entry +=   moment( parseInt(game.last_active_at) ).fromNow();
+                    entry += "</span>"
+                    entry += "<div class='subtitle is-7'>"+key+"</div>"
+                    entry += "<div class='btn_delete'>✘</div>"
+                    entry +="</button>";
+                    
+                    $("#history").append(entry);
+                }); 
+                
+                //then sort them by date
+                var sorted = $('#history .past_game').sort(function (b, a) {
+                  var contentA =parseInt( $(a).data('active'));
+                  var contentB =parseInt( $(b).data('active'));
+                  return (contentA < contentB) ? -1 : (contentA > contentB) ? 1 : 0;
+                });
+                $("#history").html(sorted);
+                $("#rejoin").show();
+                
+               
+            }
+            
+            $(document).ready(function(){
+                
+                $("#history").on("click", ".past_game", function(){
+                    console.log("clicked");
+                    window.location.href = "/play/?game=" + $(this).data("id"); 
+                })
+                
+                $("#history").on("click", ".btn_delete", function(event){
+                    event.preventDefault();
+                    event.stopPropagation();
+                    console.log("delete clicked");
+                    if(confirm("Delete this game completely?")){
+                        room.send("delete_game", $(this).parent().data("id"));
+                    }
+                    
+                })
+                
+                $("#newgame").on("click", function(){
+                    console.log("newgame clicked");
+                    window.location.href = "/play/?game=" + randomGameID(); 
+                })
+            })
+            
+        </script>
+        
+        <style>
+            /*.button:*/
+            .button{
+                padding:1.5em !important;
+                margin-bottom:1em;
+            }
+            .past_game{
+                white-space: normal;
+                padding:1em;
+                margin-bottom:1em;
+                width:100%;
+                background: #3298dc;
+                border: 1px solid transparent;
+                border-radius: 4px;
+                font-size: 1em;
+                color: white;
+                cursor: pointer;
+                position:relative;
+            }
+            .past_game:hover {
+                background: #3680b1;
+            }
+            .past_game .subtitle{
+                color:white;
+            }
+            
+            .past_game .btn_delete{
+                position: absolute;
+                z-index: 999;
+                top: -8px;
+                right: -8px;
+                padding: 3px;
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                font-size: 23px;
+                line-height: 22px;
+                text-align: center;
+                color: white;
+                background: #ff6969;
+               
+            }
+            
+        </style>
+        
+    </head>
+    <body>
+        <section class="hero is-info">
+            <div class="hero-body">
+                <div class="columns">
+                    <div class="column">
+                        <h1 class="title">
+                            Clabbers
+                        </h1>
+                        <h2 class="subtitle">
+                            Play a word game with friends
+                        </h2>
+                    </div>
+                    <div class="column is-narrow has-text-right">
+                        <div class='intro_text'>To get started, log-in with your Google account...</div>
+                        <div class="g-signin2 is-pulled-right" data-onsuccess="onSignIn" data-theme="dark"></div>
+                    </div>
+                </div>
+    
+    
+            </div>
+        </section>
+    
+        <section class='section' id='chooser' style='display:none;'>
+            <div class='box has-text-centered'>
+                <!--<div class='title is-5'>Enter a game code:</div>-->
+                <!--<div class='field'>-->
+                <!--    <div class='control'>-->
+                <!--        <input id='game_code' class='input is-large has-text-centered' style='width:300px' placeholder='game_code' onchange='gothere()' />-->
+                <!--    </div>-->
+                <!--</div>-->
+                <!--<div class='field'>-->
+                <!--    <div class='control'>-->
+                <!--        <button class='button is-primary' style="padding:1em;" onclick='gothere()'>Join game</button>-->
+                <!--    </div>-->
+                <!--</div>-->
+                <button class='button is-fullwidth is-success' id='newgame'><b>Start a New Game</b></button>
+                <div id='rejoin' style='display:none;'>
+                    <hr>
+                    <div class=''>or rejoin a Game:</div>
+                    <div id='history'></div>
+                </div>
+                
+                
+            </div>
+        </section>
+    
+    </body>
+</html>

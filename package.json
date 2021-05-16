@@ -1,0 +1,23 @@
+{
+  "name": "Clabbers",
+  "version": "0.0.1",
+  "description": "A simple word colyseus game.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@colyseus/schema": "1.0.6",
+    "colyseus": "^0.14.6",
+    "express": "^4.17.1",
+    "onesignal-node": "^3.2.1",
+    "passport": "^0.4.1",
+    "passport-google-oauth": "^2.0.0",
+    "pm2": "^4.5.6",
+    "redis": "^3.0.2",
+    "simple-spellchecker": "^1.0.1"
+  },
+  "engines": {
+    "node": "12.x"
+  }
+}
