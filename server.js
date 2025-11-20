@@ -28,7 +28,7 @@ gameServer
     .filterBy(['gameid'])
 
 
-process.env.PORT = "3400"
+process.env.PORT = "3222"
 gameServer.listen(process.env.PORT);
 console.log('Listening on port:' + process.env.PORT);
 
